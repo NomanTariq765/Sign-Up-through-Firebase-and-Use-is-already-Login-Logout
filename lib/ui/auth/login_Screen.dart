@@ -1,7 +1,12 @@
+import 'dart:js_interop';
 import 'package:firebase1/ui/auth/signup_screen.dart';
+import 'package:firebase1/utlis/utils.dart';
 import 'package:firebase1/widgets/round_buttons.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import '../posts/post_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,9 +16,12 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+
+  bool loading =false;
   final _formKey =GlobalKey<FormState>();
   final emailController = TextEditingController();
   final passwordController =TextEditingController();
+  final _auth = FirebaseAuth.instance;
 
 
   @override
@@ -22,6 +30,29 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
     emailController.dispose();
     passwordController.dispose();
+  }
+
+  void login(){
+    setState(() {
+      loading =true;
+    });
+    _auth.signInWithEmailAndPassword(
+        email: emailController.text.toString(),
+        password: passwordController.text.toString()).then((value){
+          Utils().toastMessage(value.user!.email.toString());
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context)=>PostScreen())
+          );
+          setState(() {
+            loading =false;
+          });
+    }).onError((error, stackTrace){
+      debugPrint(error.toString());
+      Utils().toastMessage(error.toString());
+      setState(() {
+        loading =false;
+      });
+    });
   }
   @override
   Widget build(BuildContext context) {
@@ -83,9 +114,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 50,
               ),
               RoundButton(
-                title: 'Login', onTap:(){
+                title: 'Login',
+                loading:  loading,
+                onTap:(){
                   if(_formKey.currentState!.validate()){
-
+                    login();
                   }
               },
               ),
